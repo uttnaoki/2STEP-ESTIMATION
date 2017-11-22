@@ -139,7 +139,7 @@ function analysing (target) {
   const target_variance = Math.round(tmp/target.length);
 
   var result = [
-    {name: "平均値", value: target_mean},
+    {name: "平均", value: target_mean},
     {name: "分散", value: target_variance}
   ];
   return result;
