@@ -131,6 +131,10 @@ function d3_plot() {
 function analysing (target) {
   // 配列 target の平均を計算
   const target_mean = Math.round(d3.mean(target));
+
+  // 配列 target の中央値を計算
+  const target_median = Math.round(d3.median(target));
+
   // 配列 target の分散を計算
   var tmp = 0;
   target.forEach(function(val) {
@@ -139,7 +143,8 @@ function analysing (target) {
   const target_variance = Math.round(tmp/target.length);
 
   var result = [
-    {name: "平均", value: target_mean},
+    // {name: "平均", value: target_mean},
+    {name: "中央値", value: target_median},
     {name: "分散", value: target_variance}
   ];
   return result;
