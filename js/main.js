@@ -1,4 +1,4 @@
-var w = 500;
+var w = 800;
 var h = 800;
 var padding = 60;
 var margin = {
@@ -30,7 +30,7 @@ d3.csv("result/china/result.csv", type, function(error, data) {
     selection_flag[i] = 1;
   }
 
-  let selection_condition = ["全体"];
+  let selection_condition = ["Non"];
   keys.forEach(function(val) {
     if (val.match(/予測フラグ/)) {
       let tmp = val.slice(6, -1);
@@ -38,9 +38,13 @@ d3.csv("result/china/result.csv", type, function(error, data) {
     }
   })
   for ( i in selection_condition ) {
+    const tmp = "div";
+    // ボタンタグを append
     $("#button_field").append("<button type='button' class='btn my-outline-primary'"
       + "id='button_" + i + "'>"
+      + "<div>"
       + selection_condition[i]
+      + "</div>"
       + "</button>");
   }
   $("#button_0").removeClass("my-outline-primary")
@@ -77,7 +81,7 @@ var svg_plot = d3.select("#canvas_plot")
 // プロジェクトの誤差に関する棒グラフの描画領域の生成
 var svg_bar = d3.select("#canvas_bar")
 .append("svg")
-.attr("width", w)
+.attr("width", w/2)
 .attr("height", h);
 
 function d3_plot() {
@@ -120,17 +124,20 @@ function d3_plot() {
     .call(yAxis);
 
   svg_plot.append("text")
-    .text("誤差")
+    .text("Residual")
     .attr("id", "circle_axis_text")
-    .attr("x", padding/2)
+    // .attr("x", padding/2)
     .attr("y", padding/2 + 10)
-    .attr("font-size", 15)
 }
 
 // 棒グラフの各値の計算
 function analysing (target) {
+  // プロジェクト数
+  const target_num = target.length;
   // 配列 target の平均を計算
   const target_mean = Math.round(d3.mean(target));
+  // 配列 target の中央値を計算
+  const target_median = Math.round(d3.median(target));
   // 配列 target の分散を計算
   var tmp = 0;
   target.forEach(function(val) {
@@ -139,8 +146,10 @@ function analysing (target) {
   const target_variance = Math.round(tmp/target.length);
 
   var result = [
-    {name: "平均", value: target_mean},
-    {name: "分散", value: target_variance}
+    {name: "Number", value: target_num},
+    // {name: "Mean", value: target_mean},
+    {name: "Median", value: target_median},
+    {name: "Variance", value: target_variance}
   ];
   return result;
 };
@@ -204,6 +213,15 @@ function d3_bar() {
     .attr("stroke-opacity", 0.7)
     .attr("stroke-width", 2)
 
+  function space_padding (base_val, this_val) {
+    const diff_length = String(base_val).length - String(this_val).length;
+    if (diff_length <= 0) {
+      return '';
+    } else {
+      return '&nbsp;&nbsp;'.repeat(diff_length);
+    }
+  }
+
   // 予測したプロジェクトに関する棒
   svg_bar.selectAll(".rect_value")
     .data(value_cal)
@@ -228,13 +246,15 @@ function d3_bar() {
     .on("mouseover", function(d, i) {
       $("#tooltip").css("visibility", "visible");
       $("#tooltip_text0").text(d.name);
-      $("#tooltip_text1").text("選択前: " + value_cal[i].value);
-      $("#tooltip_text2").text("選択後: " + d.value);
+      $("#tooltip_text1").html("All: " + value_cal[i].value);
+      $("#tooltip_text2").html("Selected: "
+        + space_padding(value_cal[i].value, d.value)
+        + d.value);
     })
     .on("mousemove", function() {
       const off = {
-        top: event.pageY-90,
-        left: event.pageX+10
+        top: event.pageY-110,
+        left: event.pageX+20
       };
       $("#tooltip").offset(off)
     })

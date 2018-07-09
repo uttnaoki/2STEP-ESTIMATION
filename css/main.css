@@ -14,11 +14,13 @@
   text-align: center;
 }
 
-button {
-  width: 120px;
-  height: 70px;
+.btn {
+  width: 150px;
+  height: 100px;
   margin: 5px;
   text-align: center;
+  white-space: normal;
+  font-size: 20px;
 }
 
 .my-primary {
@@ -46,7 +48,11 @@ button {
 
 .axis text {
   font-family: sans-serif;
-  font-size: 11px;
+  font-size: 15px;
+}
+
+#circle_axis_text {
+  font-size: 20px;
 }
 
 span#tooltip{
@@ -54,10 +60,11 @@ span#tooltip{
   z-index: 10;
   visibility: hidden;
   padding: 0 5px;
-  border: 3px solid #33f135;
+  border: 5px solid #33f135;
   border-radius: 3px;
   background-color: #90ee90;
   color: #606c65;
-  font-size: 18px;
+  font-size: 23px;
   opacity: 1;
+  text-align: right;
 }
