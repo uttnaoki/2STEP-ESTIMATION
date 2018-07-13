@@ -10,7 +10,8 @@ var not_flag_num;
 
 var dataset;
 var keys = [];
-var value = [];
+var errorAE = [];
+var errorMRE = [];
 var value_cal = [];
 var bar_yScale;
 var selection_flag = [];
@@ -22,9 +23,14 @@ d3.csv("result/china/result.csv", type, function(error, data) {
   dataset = data;
   keys = d3.map(data[0]).keys();
 
-  value = data.map(function(d) {
+  errorAE = data.map(function(d) {
+    const errorMRE = errorAE/d.実工数;
     return Math.abs(d.実工数 - d.予測工数);
   });
+  errorMRE = data.map(function(d) {
+    return Math.abs(d.実工数 - d.予測工数)/d.実工数;
+  });
+
   // 選択フラグの初期化(全て1)
   for (var i=0; i<data.length; i++) {
     selection_flag[i] = 1;
@@ -87,7 +93,7 @@ var svg_bar = d3.select("#canvas_bar")
 function d3_plot() {
   // スケール関数の生成
   var yScale = d3.scale.linear()
-    .domain([0, d3.max(value, function(d) { return d; })*1.1 ])
+    .domain([0, d3.max(errorAE, function(d) { return d; })*1.1 ])
     .range([h - padding, padding]);
 
   // Y 軸の定義
@@ -98,7 +104,7 @@ function d3_plot() {
 
   // 円の生成
   svg_plot.selectAll("circle")
-    .data(value)
+    .data(errorAE)
     .enter()
     .append("circle")
     .attr("transform", "translate(" + (padding+30) + ",0)")
@@ -124,32 +130,37 @@ function d3_plot() {
     .call(yAxis);
 
   svg_plot.append("text")
-    .text("Residual")
+    .text("Error")
     .attr("id", "circle_axis_text")
     // .attr("x", padding/2)
     .attr("y", padding/2 + 10)
 }
 
 // 棒グラフの各値の計算
-function analysing (target) {
+function analysing (targetAE, targetMRE) {
   // プロジェクト数
-  const target_num = target.length;
-  // 配列 target の平均を計算
-  const target_mean = Math.round(d3.mean(target));
-  // 配列 target の中央値を計算
-  const target_median = Math.round(d3.median(target));
-  // 配列 target の分散を計算
+  const target_num = targetAE.length;
+  // 配列 targetAE の平均を計算
+  const targetAE_mean = Math.round(d3.mean(targetAE));
+  // 配列 targetMRE の平均を計算
+  const targetMRE_mean = Math.round(d3.mean(targetMRE)*1000)/1000;
+  // 配列 targetAE の中央値を計算
+  const targetAE_median = Math.round(d3.median(targetAE));
+  // 配列 targetMRE の中央値を計算
+  const targetMRE_median = Math.round(Math.round(d3.median(targetMRE)*10000)/10)/1000;
+  // 配列 targetAE の分散を計算
   var tmp = 0;
-  target.forEach(function(val) {
-    tmp = tmp + Math.pow(val - target_mean, 2);
+  targetAE.forEach(function(val) {
+    tmp = tmp + Math.pow(val - targetAE_mean, 2);
   });
-  const target_variance = Math.round(tmp/target.length);
+  const targetAE_variance = Math.round(tmp/targetAE.length);
 
   var result = [
     {name: "Number", value: target_num},
-    // {name: "Mean", value: target_mean},
-    {name: "Median", value: target_median},
-    {name: "Variance", value: target_variance}
+    // {name: "Mean", value: targetAE_mean},
+    {name: "MdAE", value: targetAE_median},
+    {name: "MdMRE", value: targetMRE_median},
+    // {name: "Variance", value: targetAE_variance}
   ];
   return result;
 };
@@ -162,10 +173,13 @@ var bar_param = {
 
 // 棒グラフの描画
 function d3_bar() {
-  value_selection = $.grep(value, function(d, i) {
+  value_selection = $.grep(errorAE, function(d, i) {
     return (selection_flag[i] == 1);
   });
-  value_cal = analysing(value_selection);
+  value_selection_MRE = $.grep(errorMRE, function(d, i) {
+    return (selection_flag[i] == 1);
+  });
+  value_cal = analysing(value_selection, value_selection_MRE);
   bar_yScale = function (d, i) {
     var s = d3.scale.linear()
       .range([0, h - margin.bottom - padding])
@@ -328,16 +342,21 @@ function button_event ( button_id ) {
   })
 
   // 選択プロジェクトにおける値を計算
-  value_selection = $.grep(value, function(d, i) {
+  value_selection = $.grep(errorAE, function(d, i) {
     return (selection_flag[i] == 1);
   });
-  value_selection_set = analysing(value_selection);
+  value_selection_MRE = $.grep(errorMRE, function(d, i) {
+    return (selection_flag[i] == 1);
+  });
+  value_selection_set = analysing(value_selection, value_selection_MRE);
   svg_bar.selectAll(".rect_dec")
     .data(value_selection_set)
     .transition()
     .duration(1000)
     .attr("height", function(d, i) {
-      return h - bar_yScale(d.value, i) - margin.bottom - padding;
+      const height = h - bar_yScale(d.value, i) - margin.bottom - padding;
+      if (height > 0) return height;
+      else return 0;
     })
   svg_bar.selectAll(".rect_value")
     .data(value_selection_set)
